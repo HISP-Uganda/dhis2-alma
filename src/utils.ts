@@ -147,7 +147,7 @@ export const queryDHIS2 = async ({
             for (const { id: indicator } of indicators) {
                 console.log(`---${id}---${name}----`);
                 const url = `analytics.json?dimension=dx:${indicator}&dimension=pe:${pe}&dimension=ou:${id}`;
-                const progress = calculateNestedLoopProgress(
+                const { percentage, step, total } = calculateNestedLoopProgress(
                     i,
                     j,
                     units.organisationUnits.length,
@@ -163,8 +163,8 @@ export const queryDHIS2 = async ({
                     db.run(
                         `UPDATE schedules SET progress = ?, message = ? WHERE id = ?`,
                         [
-                            progress,
-                            `Completed step ${i} of ${totalSteps} (${name})`,
+                            percentage,
+                            `Completed step ${step} of ${total} (${name})`,
                             id,
                         ],
                     );
