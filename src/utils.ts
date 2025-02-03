@@ -130,36 +130,52 @@ export const queryDHIS2 = async ({
             units.organisationUnits = [data];
         }
 
-        let i = 1;
+        const {
+            data: { indicators },
+        } = await dhis2Api.get<{ indicators: { id: string }[] }>(
+            `indicatorGroups/SWDeaw0RUyR.json`,
+            {
+                params: { fields: "indicators[id,name]" },
+            },
+        );
+
+        let i = 0;
         const totalSteps = units.organisationUnits.length;
         for (const { id, name } of units.organisationUnits) {
-            console.log(`---${id}---${name}----`);
-            const url = `analytics.json?dimension=dx:IN_GROUP-SWDeaw0RUyR&dimension=pe:${pe}&dimension=ou:${id}`;
-            const progress = Math.round((i + 1 / totalSteps) * 100);
-            try {
-                const { data } = await dhis2Api.get(url);
-                await sendToAlma({
-                    data,
-                    scorecard,
-                    name,
-                });
-                db.run(
-                    `UPDATE schedules SET progress = ?, message = ? WHERE id = ?`,
-                    [
-                        progress,
-                        `Completed step ${i} of ${totalSteps} (${name})`,
-                        id,
-                    ],
-                );
-            } catch (error) {
-                console.log(error);
-            }
+            let j = 0;
 
+            for (const indicator of indicators) {
+                console.log(`---${id}---${name}----`);
+                const url = `analytics.json?dimension=dx:${indicator}&dimension=pe:${pe}&dimension=ou:${id}`;
+                const progress = calculateNestedLoopProgress(
+                    i,
+                    j,
+                    units.organisationUnits.length,
+                    indicators.length,
+                );
+                try {
+                    const { data } = await dhis2Api.get(url);
+                    await sendToAlma({
+                        data,
+                        scorecard,
+                        name,
+                    });
+                    db.run(
+                        `UPDATE schedules SET progress = ?, message = ? WHERE id = ?`,
+                        [
+                            progress,
+                            `Completed step ${i} of ${totalSteps} (${name})`,
+                            id,
+                        ],
+                    );
+                } catch (error) {
+                    console.log(error);
+                }
+                j = j + 1;
+            }
             i = i + 1;
         }
-
         const endTime = new Date().toISOString();
-
         try {
             db.run(
                 `UPDATE job_executions SET endTime = ?, status = ? WHERE id = ?`,
