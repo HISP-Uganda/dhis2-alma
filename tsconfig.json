@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "jsx": "react-jsx",
+        "module": "NodeNext",
+        "target": "ESNext",
+        "jsxImportSource": "hono/jsx"
+    }
+}

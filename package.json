@@ -1,0 +1,17 @@
+{
+  "name": "dhis2-alma",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cron-parser": "^4.9.0",
+    "form-data": "^4.0.1",
+    "hono": "^4.6.19",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node-cron": "^3.0.11"
+  }
+}
