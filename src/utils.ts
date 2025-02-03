@@ -141,9 +141,9 @@ export const queryDHIS2 = async ({
 
         let i = 0;
         const totalSteps = units.organisationUnits.length;
+        console.log("This is not working");
         for (const { id, name } of units.organisationUnits) {
             let j = 0;
-
             for (const indicator of indicators) {
                 console.log(`---${id}---${name}----`);
                 const url = `analytics.json?dimension=dx:${indicator}&dimension=pe:${pe}&dimension=ou:${id}`;
