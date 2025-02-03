@@ -144,7 +144,7 @@ export const queryDHIS2 = async ({
         console.log("This is not working");
         for (const { id, name } of units.organisationUnits) {
             let j = 0;
-            for (const indicator of indicators) {
+            for (const { id: indicator } of indicators) {
                 console.log(`---${id}---${name}----`);
                 const url = `analytics.json?dimension=dx:${indicator}&dimension=pe:${pe}&dimension=ou:${id}`;
                 const progress = calculateNestedLoopProgress(
