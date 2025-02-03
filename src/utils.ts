@@ -2,6 +2,14 @@ import axios from "axios";
 import { Schedule } from "./interfaces";
 import { db } from "./db";
 
+const NOT_FOR_PROFIT = ["svd8pMum32y", "LrvtF9Umvsh"];
+const NOT_FOR_PROFIT_INDICATIONS = [
+    "ofZGItap633",
+    "LbXgcyeBgZy",
+    "HF37g2iSiZB",
+    "VACcvy5d4vu",
+];
+
 export const almaApi = axios.create({
     baseURL: String(process.env.BASE_URL),
 });
@@ -13,21 +21,6 @@ export const dhis2Api = axios.create({
         password: String(process.env.DHIS2_PASSWORD),
     },
 });
-
-function calculateNestedLoopProgress(
-    i: number,
-    j: number,
-    totalOuter: number,
-    totalInner: number,
-) {
-    const total = totalOuter * totalInner;
-    const step = i * totalInner + j + 1;
-    return {
-        percentage: (step / total) * 100,
-        step,
-        total,
-    };
-}
 
 export const sendToAlma = async ({
     data,
@@ -107,7 +100,7 @@ export const queryDHIS2 = async ({
                 `organisationUnits/${ou}.json`,
                 {
                     params: {
-                        fields: "id,name",
+                        fields: "id,name,level,organisationUnitGroups",
                         includeDescendants: true,
                         paging: false,
                     },
@@ -122,10 +115,10 @@ export const queryDHIS2 = async ({
             const { data } = await dhis2Api.get<{
                 id: string;
                 name: string;
-                level: number;
                 organisationUnitGroups: { id: string }[];
+                level: number;
             }>(`organisationUnits/${ou}.json`, {
-                params: { fields: "id,name,level" },
+                params: { fields: "id,name,level,organisationUnitGroups" },
             });
             units.organisationUnits = [data];
         }
@@ -139,39 +132,62 @@ export const queryDHIS2 = async ({
             },
         );
 
-        let i = 0;
+        const allIndicators = indicators.map(({ id }) => id);
+        let i = 1;
         const totalSteps = units.organisationUnits.length;
-        console.log("This is not working");
-        for (const { id, name } of units.organisationUnits) {
-            let j = 0;
-            for (const { id: indicator } of indicators) {
-                console.log(`---${id}---${name}----`);
-                const url = `analytics.json?dimension=dx:${indicator}&dimension=pe:${pe}&dimension=ou:${id}`;
-                const { percentage, step, total } = calculateNestedLoopProgress(
-                    i,
-                    j,
-                    units.organisationUnits.length,
-                    indicators.length,
+        for (const {
+            id,
+            name,
+            organisationUnitGroups,
+            level,
+        } of units.organisationUnits) {
+            const isNot4Profit =
+                organisationUnitGroups.filter(
+                    (a) => NOT_FOR_PROFIT.indexOf(a.id) !== -1,
+                ).length > 0;
+            let availableIndicators = allIndicators;
+            if (!isNot4Profit && level === 5) {
+                availableIndicators = availableIndicators.filter(
+                    (i) => NOT_FOR_PROFIT_INDICATIONS.indexOf(i) === -1,
                 );
-                try {
-                    const { data } = await dhis2Api.get(url);
-                    await sendToAlma({
-                        data,
-                        scorecard,
-                        name,
-                    });
-                    db.run(
-                        `UPDATE schedules SET progress = ?, message = ? WHERE id = ?`,
-                        [
-                            percentage,
-                            `Completed step ${step} of ${total} (${name})`,
-                            id,
-                        ],
-                    );
-                } catch (error) {
-                    console.log(error);
+            }
+            const url = `analytics.json?dimension=dx:${availableIndicators.join(
+                ";",
+            )}&dimension=pe:${pe}&dimension=ou:${id}`;
+            try {
+                const { data } = await dhis2Api.get(url);
+                await sendToAlma({
+                    data,
+                    scorecard,
+                    name,
+                });
+            } catch (error) {
+                for (const { id: indicator } of indicators) {
+                    const url = `analytics.json?dimension=dx:${indicator}&dimension=pe:${pe}&dimension=ou:${id}`;
+                    try {
+                        const { data: data2 } = await dhis2Api.get(url);
+                        await sendToAlma({
+                            data: data2,
+                            scorecard,
+                            name,
+                        });
+                    } catch (error) {
+                        console.log(error);
+                    }
                 }
-                j = j + 1;
+            }
+            const progress = Math.round((i / totalSteps) * 100);
+            try {
+                db.run(
+                    `UPDATE schedules SET progress = ?, message = ? WHERE id = ?`,
+                    [
+                        progress,
+                        `Completed step ${i} of ${totalSteps} (${name})`,
+                        id,
+                    ],
+                );
+            } catch (error) {
+                console.log(error);
             }
             i = i + 1;
         }

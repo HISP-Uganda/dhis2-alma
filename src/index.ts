@@ -187,11 +187,9 @@ app.post("/schedules/:id/start", async (c) => {
     const scheduleRow = db
         .query<Schedule, string>("SELECT * FROM schedules WHERE id = ?")
         .get(id);
-
     if (!scheduleRow) {
         return c.json({ error: "Schedule not found" }, 404);
     }
-
     const schedule = scheduleFromRow(scheduleRow);
 
     if (schedule.isActive) {
@@ -266,7 +264,6 @@ app.post("/schedules/:id/stop", async (c) => {
         return c.json({ error: "Failed to stop schedule" }, 500);
     }
 });
-
 // Delete a schedule
 app.delete("/schedules/:id", async (c) => {
     const id = c.req.param("id");

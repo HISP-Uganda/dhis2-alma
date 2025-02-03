@@ -5,13 +5,11 @@ import { db } from "./db";
 import { ProgressUpdate, Schedule } from "./interfaces";
 
 export function cleanupRunningJobs() {
-    console.log("Checking for running jobs...");
     const runningJobs = db
         .query<Schedule, string>("SELECT * FROM schedules WHERE status = ?")
         .all("running");
 
     for (const job of runningJobs) {
-        console.log(`Found running job: ${job.name} (${job.id})`);
         db.run(
             `UPDATE schedules SET status = 'failed', progress = ?, updatedAt = ?,lastRun = ? WHERE id = ?`,
             [0, new Date().toISOString(), new Date().toISOString(), job.id],
@@ -79,21 +77,24 @@ export function startScheduleJob(
     runningJobs: Map<string, cron.ScheduledTask>,
     func: (schedule: Schedule) => Promise<void>,
 ) {
-    const job = cron.schedule(schedule.cronExpression, async () => {
-        console.log(
-            `Executing task for schedule ${schedule.id}: ${schedule.task}`,
-        );
-
-        try {
-            await func(schedule);
-        } catch (error) {
-            console.error(
-                `Error executing task for schedule ${schedule.id}:`,
-                error,
+    const job = cron.schedule(
+        schedule.cronExpression,
+        async () => {
+            console.log(
+                `Executing task for schedule ${schedule.id}: ${schedule.task}`,
             );
-        }
-    });
 
+            try {
+                await func(schedule);
+            } catch (error) {
+                console.error(
+                    `Error executing task for schedule ${schedule.id}:`,
+                    error,
+                );
+            }
+        },
+        { timezone: "Africa/Nairobi" },
+    );
     job.start();
     runningJobs.set(schedule.id, job);
     return job;
