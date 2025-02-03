@@ -133,6 +133,7 @@ export const queryDHIS2 = async ({
         let i = 1;
         const totalSteps = units.organisationUnits.length;
         for (const { id, name } of units.organisationUnits) {
+            console.log(`---${id}---${name}----`);
             const url = `analytics.json?dimension=dx:IN_GROUP-SWDeaw0RUyR&dimension=pe:${pe}&dimension=ou:${id}`;
             const progress = Math.round((i + 1 / totalSteps) * 100);
             try {
