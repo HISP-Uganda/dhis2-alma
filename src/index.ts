@@ -216,7 +216,8 @@ app.post("/schedules/:id/start", async (c) => {
             message: "Schedule started successfully",
             schedule: scheduleFromRow(updatedSchedule),
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.log(error.message);
         return c.json({ error: "Failed to start schedule" }, 500);
     }
 });
