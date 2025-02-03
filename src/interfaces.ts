@@ -14,7 +14,6 @@ export interface Schedule {
     lastRun?: Date;
     nextRun?: Date | undefined | null;
     progress?: number;
-    currentStep: number;
     status?: "idle" | "running" | "completed" | "failed";
     lastStatus?: string;
     currentJobId?: string;

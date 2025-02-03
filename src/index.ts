@@ -201,7 +201,7 @@ app.post("/schedules/:id/start", async (c) => {
     try {
         startScheduleJob(schedule, runningJobs, queryDHIS2);
         db.run(
-            `UPDATE schedules SET isActive = 1, updatedAt = ?, status = 'idle', progress = 0, currentStep = 0 WHERE id = ?`,
+            `UPDATE schedules SET isActive = 1, updatedAt = ?, status = 'idle', progress = 0 WHERE id = ?`,
             [new Date().toISOString(), id],
         );
 

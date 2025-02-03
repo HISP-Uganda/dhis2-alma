@@ -70,7 +70,6 @@ export function scheduleFromRow(row: Schedule): Schedule {
         pe: row.pe,
         ou: row.ou,
         scorecard: row.scorecard,
-        currentStep: 0,
     };
 }
 // ==================== Utility Functions ====================
