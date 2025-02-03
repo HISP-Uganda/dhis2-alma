@@ -22,7 +22,7 @@ export function initializeDatabase() {
       retryAttempts INTEGER DEFAULT 0,
       maxRetries INTEGER DEFAULT 3,
       retryDelay INTEGER DEFAULT 60,
-      message TEXT
+      message TEXT,
 			pe TEXT,
 			scorecard INTEGER DEFAULT 0,
 			ou INTEGER DEFAULT 0,
